@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Order;
+use App\OrderDetails;
 use App\Product;
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class WebController extends Controller
 {
@@ -62,6 +65,32 @@ class WebController extends Controller
 
     public function checkout_cart()
     {
-        return Cart::content();
+        if(Auth::check() AND Cart::count() > 0){
+            $order = Order::create([
+                'user_id' => Auth::user()->id,
+                'order_total' => (float) Cart::total(),
+                'status' => 0
+            ]);
+
+            foreach(Cart::content() as $row){
+                OrderDetails::create([
+                    'order_id' => $order->id,
+                    'product_id' => $row->id,
+                    'name' => $row->name,
+                    'quantity' => $row->qty,
+                    'price' => $row->price,
+                ]);
+            }
+            Cart::destroy();
+            return redirect()->route('web')->with('message', 'Order placed successfully.');
+        } else {
+            return redirect()->route('login');
+        }
+    }
+
+    public function orders()
+    {
+        $orders = Order::with('order_details')->orderBy('id', 'desc')->get();
+        return view('orders', compact('orders'));
     }
 }

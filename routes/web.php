@@ -11,7 +11,8 @@
 |
 */
 
-Route::get('/', 'WebController@index');
+Route::get('/', 'WebController@index')->name('web');
+Route::get('/get-orders', 'WebController@orders')->name('orders');
 
 /**
  * Cart Route
